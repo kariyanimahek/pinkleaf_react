@@ -11,7 +11,7 @@ export default function AdminProductList(){
   const [editName,setEditName] = useState("");
   const [editPrice,setEditPrice] = useState("");
 
-  /* ================= LOAD PRODUCTS ================= */
+  /* LOAD PRODUCTS */
 
   useEffect(()=>{
 
@@ -79,7 +79,7 @@ export default function AdminProductList(){
 
 <div style={{minHeight:"100vh",background:"#f5f5f5"}}>
 
-{/* ================= NAVBAR ================= */}
+{/* NAVBAR */}
 
 <div style={{
 display:"flex",
@@ -113,7 +113,7 @@ LogOut
 
 <div style={{display:"flex"}}>
 
-{/* ================= SIDEBAR ================= */}
+{/* SIDEBAR*/}
 
 <div style={{
 width:"240px",

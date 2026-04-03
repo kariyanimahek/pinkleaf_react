@@ -59,7 +59,7 @@ export default function Checkout(){
       name: userData?.fullName || "User",
       address: userData?.address || "N/A",
 
-      // 🔥 normalize products (IMPORTANT FIX)
+      //  normalize products 
       items: cartItems.map(item=>({
         ...item,
         price: Number(item.price) || 0,

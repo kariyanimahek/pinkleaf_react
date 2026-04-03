@@ -26,7 +26,7 @@ export default function AppRoutes(){
 
       <Routes>
 
-        {/* Guest Page (without login) */}
+        {/* Guest Page */}
         <Route path="/" element={<Guest />} />
 
         {/* Login Page */}
@@ -35,7 +35,7 @@ export default function AppRoutes(){
         {/* Signup Page */}
         <Route path="/signup" element={<Signup />} />
 
-        {/* Home Page (after login) */}
+        {/* Home Page */}
         <Route path="/home" element={<Home />} />
 
         {/* Profile Page */}
@@ -71,7 +71,7 @@ export default function AppRoutes(){
         {/* Manage Products */}
         <Route path="/admin/products" element={<AdminProducts />} />
 
-        {/* Product List for Edit/Delete */}
+        {/* Product List  */}
         <Route path="/admin/product-list" element={<AdminProductList />} />
 
         {/* Wholesale Requests */}

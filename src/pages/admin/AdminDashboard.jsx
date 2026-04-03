@@ -123,10 +123,10 @@ minHeight:"calc(100vh - 70px)"
 
 <div style={{display:"flex",gap:"20px",flexWrap:"wrap"}}>
 
-<Card title="Total Products" value={products.length} color="#4CAF50" icon="📦"/>
-<Card title="Total Orders" value={orders.length} color="#2196F3" icon="🛒"/>
-<Card title="Total Users" value={users.length} color="#FF9800" icon="👥"/>
-<Card title="Revenue" value={`₹ ${totalRevenue}`} color="#9C27B0" icon="💰"/>
+<Card title="Total Products" value={products.length} color="#4CAF50" />
+<Card title="Total Orders" value={orders.length} color="#2196F3" />
+<Card title="Total Users" value={users.length} color="#FF9800" />
+<Card title="Revenue" value={`₹ ${totalRevenue}`} color="#9C27B0" />
 
 </div>
 
@@ -152,7 +152,6 @@ borderRadius:"8px"
 
 </div>
 
-{/* ✅ SINGLE ROW PER ORDER (FINAL FIX) */}
 
 {orders.map((order,orderIndex)=>(
 
