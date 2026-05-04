@@ -1,72 +1,76 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/pinkleaf_logo.jpeg";
+import api from "../../lib/api";
 
 export default function Categories() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState("");
 
-  // LOAD FROM STORAGE
+  /* LOAD CATEGORIES */
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error fetching categories", error);
+    }
+  };
+
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role !== "admin") {
       navigate("/home");
       return;
     }
-
-    const stored = JSON.parse(localStorage.getItem("categories")) || [
-      "T-shirt",
-      "Jeans",
-      "Western Wear",
-      "Cordset",
-      "Kurti"
-    ];
-    setCategories(stored);
-    localStorage.setItem("categories", JSON.stringify(stored));
+    fetchCategories();
   }, [navigate]);
 
   // ADD CATEGORY
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newCategory.trim()) return;
-    if (categories.some(cat => cat.toLowerCase() === newCategory.trim().toLowerCase())) {
-      alert("Category already exists!");
-      return;
+    try {
+      await api.post('/categories', { name: newCategory.trim() });
+      fetchCategories();
+      setNewCategory("");
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.msg || error.message));
     }
-
-    const updated = [...categories, newCategory.trim()];
-    saveCategories(updated);
-    setNewCategory("");
   };
 
   // DELETE CATEGORY
-  const handleDelete = (index) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      const updated = categories.filter((_, i) => i !== index);
-      saveCategories(updated);
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure?")) {
+      try {
+        await api.delete(`/categories/${id}`);
+        setCategories(categories.filter(c => c._id !== id));
+      } catch (error) {
+        alert("Error: " + (error.response?.data?.msg || error.message));
+      }
     }
   };
 
   // EDIT CATEGORY
-  const startEdit = (index) => {
-    setEditingIndex(index);
-    setEditValue(categories[index]);
+  const startEdit = (cat) => {
+    setEditingId(cat._id);
+    setEditValue(cat.name);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editValue.trim()) return;
-    const updated = [...categories];
-    updated[editingIndex] = editValue.trim();
-    saveCategories(updated);
-    setEditingIndex(null);
-    setEditValue("");
-  };
-
-  const saveCategories = (updated) => {
-    setCategories(updated);
-    localStorage.setItem("categories", JSON.stringify(updated));
+    try {
+      await api.put(`/categories/${editingId}`, { name: editValue.trim() });
+      setCategories(categories.map(c =>
+        c._id === editingId ? { ...c, name: editValue.trim() } : c
+      ));
+      setEditingId(null);
+      setEditValue("");
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.msg || error.message));
+    }
   };
 
   return (
@@ -111,9 +115,9 @@ export default function Categories() {
         }}>
           <SidebarItem text="Dashboard" onClick={() => navigate("/admin")} />
           <SidebarItem text="Categories" active onClick={() => navigate("/admin/categories")} />
-          <SidebarItem text="Products"  onClick={() => navigate("/admin/products")}/>
-          <SidebarItem text="Product List" onClick={()=>navigate("/admin/product-list")}/>
-          <SidebarItem text="Wholesale Request" onClick={()=>navigate("/admin/wholesale-requests")} />
+          <SidebarItem text="Products" onClick={() => navigate("/admin/products")} />
+          <SidebarItem text="Product List" onClick={() => navigate("/admin/product-list")} />
+          <SidebarItem text="Wholesale Request" onClick={() => navigate("/admin/wholesale-requests")} />
         </div>
 
         {/* CONTENT */}
@@ -159,8 +163,8 @@ export default function Categories() {
 
             {/* CATEGORY LIST */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {categories.map((cat, index) => (
-                <div key={index} style={{
+              {categories.map((cat) => (
+                <div key={cat._id} style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
@@ -169,7 +173,7 @@ export default function Categories() {
                   borderRadius: "10px",
                   border: "1px solid #eee"
                 }}>
-                  {editingIndex === index ? (
+                  {editingId === cat._id ? (
                     <div style={{ display: "flex", gap: "10px", flex: 1 }}>
                       <input
                         value={editValue}
@@ -183,14 +187,14 @@ export default function Categories() {
                         autoFocus
                       />
                       <button onClick={handleUpdate} style={actionButtonStyle("#4CAF50")}>Save</button>
-                      <button onClick={() => setEditingIndex(null)} style={actionButtonStyle("#999")}>Cancel</button>
+                      <button onClick={() => setEditingId(null)} style={actionButtonStyle("#999")}>Cancel</button>
                     </div>
                   ) : (
                     <>
-                      <h3 style={{ margin: 0, color: "#444", fontWeight: "500" }}>{cat}</h3>
+                      <h3 style={{ margin: 0, color: "#444", fontWeight: "500" }}>{cat.name}</h3>
                       <div style={{ display: "flex", gap: "10px" }}>
-                        <button onClick={() => startEdit(index)} style={actionButtonStyle("#ff2e8a")}>Edit</button>
-                        <button onClick={() => handleDelete(index)} style={actionButtonStyle("#333")}>Delete</button>
+                        <button onClick={() => startEdit(cat)} style={actionButtonStyle("#ff2e8a")}>Edit</button>
+                        <button onClick={() => handleDelete(cat._id)} style={actionButtonStyle("#333")}>Delete</button>
                       </div>
                     </>
                   )}

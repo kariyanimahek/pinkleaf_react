@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../lib/api";
 
 import logo from "../../assets/pinkleaf_logo.jpeg";
 
@@ -23,10 +24,15 @@ export default function Checkout(){
 
     setCartItems(storedCart);
 
-    const userData =
-      JSON.parse(localStorage.getItem("userData")) || {};
-
-    setUser(userData);
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/auth/profile');
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user", error);
+      }
+    };
+    fetchUser();
 
   },[]);
 
@@ -39,50 +45,41 @@ export default function Checkout(){
   );
 
 
-  // ✅ PLACE ORDER (FULLY FIXED)
-  const placeOrder = ()=>{
+  // ✅ PLACE ORDER DYNAMICALLY
+  const placeOrder = async () => {
 
     if(cartItems.length === 0){
       alert("Cart is empty");
       return;
     }
 
-    const existingOrders =
-      JSON.parse(localStorage.getItem("orders")) || [];
+    try {
+      const orderPayload = {
+        name: user?.fullName || "User",
+        address: user?.address || "N/A",
 
-    const userData =
-      JSON.parse(localStorage.getItem("userData")) || {};
+        // normalize products
+        items: cartItems.map(item=>({
+          name: item.name,
+          price: Number(item.price) || 0,
+          quantity: item.quantity || 1,
+          img: item.img,
+          size: item.size
+        })),
 
-    const newOrder = {
-      id: Date.now(),
+        total: Number(totalPrice) || 0
+      };
 
-      name: userData?.fullName || "User",
-      address: userData?.address || "N/A",
+      const response = await api.post('/orders', orderPayload);
 
-      //  normalize products 
-      items: cartItems.map(item=>({
-        ...item,
-        price: Number(item.price) || 0,
-        quantity: item.quantity || 1
-      })),
+      // CLEAR CART
+      localStorage.removeItem("cart");
 
-      total: Number(totalPrice) || 0,
-      status: "Pending",
-      createdAt: new Date().toISOString()
-    };
-
-    existingOrders.push(newOrder);
-
-    localStorage.setItem(
-      "orders",
-      JSON.stringify(existingOrders)
-    );
-
-    // CLEAR CART
-    localStorage.removeItem("cart");
-
-    // SUCCESS PAGE
-    navigate(`/order-success/${newOrder.id}`);
+      // SUCCESS PAGE
+      navigate(`/order-success/${response.data._id}`);
+    } catch (error) {
+      alert("Error placing order: " + (error.response?.data?.msg || error.message));
+    }
   };
 
 

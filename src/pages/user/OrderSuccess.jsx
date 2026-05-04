@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import api from "../../lib/api";
 
 export default function OrderSuccess(){
 
@@ -9,12 +10,15 @@ export default function OrderSuccess(){
   const [order,setOrder] = useState(null);
 
   useEffect(()=>{
-
-    const orders = JSON.parse(localStorage.getItem("orders")) || [];
-    const foundOrder = orders.find(o => o.id.toString() === id);
-
-    setOrder(foundOrder);
-
+    const fetchOrder = async () => {
+      try {
+        const response = await api.get(`/orders/${id}`);
+        setOrder(response.data);
+      } catch (error) {
+        console.error("Error fetching order", error);
+      }
+    };
+    fetchOrder();
   },[id]);
 
   if(!order) return <h2 style={{padding:"40px"}}>Loading...</h2>;
@@ -47,7 +51,7 @@ export default function OrderSuccess(){
         <p>Your order has been successfully placed.</p>
 
         <h3 style={{marginTop:"20px"}}>
-          Order ID: #{order.id}
+          Order ID: #{order._id?.substring(order._id.length - 8).toUpperCase()}
         </h3>
 
         <p>Estimated Delivery: 3-5 working days</p>

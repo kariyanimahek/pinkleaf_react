@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/pinkleaf_logo.jpeg";
+import api from "../../lib/api";
 
 export default function MyOrders(){
 
@@ -13,12 +14,15 @@ export default function MyOrders(){
   };
 
   useEffect(()=>{
-
-    const storedOrders = JSON.parse(localStorage.getItem("orders")) || [];
-
-    // Latest order first
-    setOrders(storedOrders.reverse());
-
+    const fetchOrders = async () => {
+      try {
+        const response = await api.get('/orders/myorders');
+        setOrders(response.data);
+      } catch (error) {
+        console.error("Error fetching orders", error);
+      }
+    };
+    fetchOrders();
   },[]);
 
   const getStatusColor = (status)=>{
@@ -108,7 +112,7 @@ export default function MyOrders(){
               alignItems:"center"
             }}>
 
-              <h3>Order ID: #{order.id}</h3>
+              <h3>Order ID: #{order._id?.substring(order._id.length - 8).toUpperCase()}</h3>
 
               {/* STATUS BADGE */}
 
@@ -123,7 +127,7 @@ export default function MyOrders(){
 
             </div>
 
-            <p>Date: {order.date}</p>
+            <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
 
             <hr/>
 

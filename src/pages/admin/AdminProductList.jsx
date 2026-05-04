@@ -1,54 +1,63 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/pinkleaf_logo.jpeg";
+import api from "../../lib/api";
 
-export default function AdminProductList(){
+const BASE_URL = 'http://localhost:5050';
+
+export default function AdminProductList() {
 
   const navigate = useNavigate();
 
-  const [products,setProducts] = useState([]);
-  const [editingId,setEditingId] = useState(null);
-  const [editName,setEditName] = useState("");
-  const [editPrice,setEditPrice] = useState("");
+  const [products, setProducts] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
 
   /* LOAD PRODUCTS */
 
-  useEffect(()=>{
+  useEffect(() => {
 
     const role = localStorage.getItem("role");
 
-    if(role !== "admin"){
+    if (role !== "admin") {
       navigate("/home");
       return;
     }
 
-    const storedProducts =
-      JSON.parse(localStorage.getItem("products")) || [];
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get('/products');
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching products", error);
+      }
+    };
 
-    setProducts(storedProducts);
+    fetchProducts();
 
-  },[]);
+  }, []);
 
 
   /* ================= DELETE PRODUCT ================= */
 
-  const deleteProduct = (id)=>{
+  const deleteProduct = async (id) => {
 
-    const updated = products.filter(p=>p.id !== id);
+    if (!window.confirm("Are you sure?")) return;
 
-    setProducts(updated);
-
-    localStorage.setItem(
-      "products",
-      JSON.stringify(updated)
-    );
+    try {
+      await api.delete(`/products/${id}`);
+      setProducts(products.filter(p => p._id !== id));
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.msg || error.message));
+    }
   };
 
 
   /* ================= START EDIT ================= */
 
-  const startEdit = (product)=>{
-    setEditingId(product.id);
+  const startEdit = (product) => {
+    setEditingId(product._id);
     setEditName(product.name);
     setEditPrice(product.price);
   };
@@ -56,243 +65,242 @@ export default function AdminProductList(){
 
   /* ================= SAVE EDIT ================= */
 
-  const saveEdit = ()=>{
+  const saveEdit = async () => {
 
-    const updated = products.map(p=>
-      p.id === editingId
-        ? {...p,name:editName,price:Number(editPrice)}
-        : p
-    );
+    try {
+      const response = await api.put(`/products/${editingId}`, {
+        name: editName,
+        price: Number(editPrice)
+      });
 
-    setProducts(updated);
-
-    localStorage.setItem(
-      "products",
-      JSON.stringify(updated)
-    );
-
-    setEditingId(null);
+      setProducts(products.map(p =>
+        p._id === editingId ? { ...p, name: editName, price: Number(editPrice) } : p
+      ));
+      setEditingId(null);
+    } catch (error) {
+      alert("Error: " + (error.response?.data?.msg || error.message));
+    }
   };
 
 
-  return(
+  return (
 
-<div style={{minHeight:"100vh",background:"#f5f5f5"}}>
+    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
 
-{/* NAVBAR */}
+      {/* NAVBAR */}
 
-<div style={{
-display:"flex",
-justifyContent:"space-between",
-alignItems:"center",
-background:"#fff",
-padding:"15px 40px",
-boxShadow:"0 2px 5px rgba(0,0,0,0.1)"
-}}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: "#fff",
+        padding: "15px 40px",
+        boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+      }}>
 
-<div style={{display:"flex",alignItems:"center",gap:"15px"}}>
-<img src={logo} width="40"/>
-<h3>Admin Dashboard</h3>
-</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          <img src={logo} width="40" />
+          <h3>Admin Dashboard</h3>
+        </div>
 
-<button
-onClick={()=>navigate("/")}
-style={{
-background:"#ff2e8a",
-color:"#fff",
-border:"none",
-padding:"8px 18px",
-borderRadius:"5px"
-}}
->
-LogOut
-</button>
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            background: "#ff2e8a",
+            color: "#fff",
+            border: "none",
+            padding: "8px 18px",
+            borderRadius: "5px"
+          }}
+        >
+          LogOut
+        </button>
 
-</div>
-
-
-<div style={{display:"flex"}}>
-
-{/* SIDEBAR*/}
-
-<div style={{
-width:"240px",
-background:"#ff2e8a",
-color:"#fff",
-padding:"20px",
-minHeight:"calc(100vh - 70px)"
-}}>
-
-<SidebarItem text="Dashboard" onClick={()=>navigate("/admin")} />
-<SidebarItem text="Categories" onClick={()=>navigate("/admin/categories")} />
-<SidebarItem text="Products" onClick={()=>navigate("/admin/products")} />
-<SidebarItem text="Product List" active />
-<SidebarItem text="Wholesale Request" onClick={()=>navigate("/admin/wholesale-requests")} />
-
-</div>
+      </div>
 
 
-{/* ================= CONTENT ================= */}
+      <div style={{ display: "flex" }}>
 
-<div style={{flex:1,padding:"40px"}}>
+        {/* SIDEBAR*/}
 
-<h1>Product List</h1>
+        <div style={{
+          width: "240px",
+          background: "#ff2e8a",
+          color: "#fff",
+          padding: "20px",
+          minHeight: "calc(100vh - 70px)"
+        }}>
 
-{/* HEADER */}
+          <SidebarItem text="Dashboard" onClick={() => navigate("/admin")} />
+          <SidebarItem text="Categories" onClick={() => navigate("/admin/categories")} />
+          <SidebarItem text="Products" onClick={() => navigate("/admin/products")} />
+          <SidebarItem text="Product List" active />
+          <SidebarItem text="Wholesale Request" onClick={() => navigate("/admin/wholesale-requests")} />
 
-<div style={{
-display:"flex",
-background:"#eee",
-padding:"12px",
-marginTop:"20px",
-fontWeight:"bold",
-borderRadius:"8px"
-}}>
-<p style={{width:"120px"}}>Image</p>
-<p style={{width:"150px"}}>Category</p>
-<p style={{width:"220px"}}>Name</p>
-<p style={{width:"120px"}}>Price</p>
-<p>Action</p>
-</div>
+        </div>
 
 
-{/* PRODUCTS */}
+        {/* ================= CONTENT ================= */}
 
-{products.map(product=>(
+        <div style={{ flex: 1, padding: "40px" }}>
 
-<div key={product.id}
-style={{
-display:"flex",
-alignItems:"center",
-background:"#fff",
-padding:"15px",
-marginTop:"10px",
-borderRadius:"10px",
-boxShadow:"0 0 5px rgba(0,0,0,0.08)"
-}}
->
+          <h1>Product List</h1>
 
-<img
-src={product.img}
-style={{
-width:"70px",
-height:"70px",
-objectFit:"cover",
-borderRadius:"8px"
-}}
-/>
+          {/* HEADER */}
 
-<p style={{marginLeft:"20px",width:"130px"}}>
-{product.category}
-</p>
+          <div style={{
+            display: "flex",
+            background: "#eee",
+            padding: "12px",
+            marginTop: "20px",
+            fontWeight: "bold",
+            borderRadius: "8px"
+          }}>
+            <p style={{ width: "120px" }}>Image</p>
+            <p style={{ width: "150px" }}>Category</p>
+            <p style={{ width: "220px" }}>Name</p>
+            <p style={{ width: "120px" }}>Price</p>
+            <p>Action</p>
+          </div>
 
 
-{/* NAME */}
+          {/* PRODUCTS */}
 
-<div style={{width:"220px"}}>
+          {products.map(product => (
 
-{editingId === product.id ? (
-<input
-value={editName}
-onChange={(e)=>setEditName(e.target.value)}
-style={{padding:"6px"}}
-/>
-):(
-<p>{product.name}</p>
-)}
+            <div key={product._id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: "#fff",
+                padding: "15px",
+                marginTop: "10px",
+                borderRadius: "10px",
+                boxShadow: "0 0 5px rgba(0,0,0,0.08)"
+              }}
+            >
 
-</div>
+              <img
+                src={`${BASE_URL}${product.img}`}
+                style={{
+                  width: "70px",
+                  height: "70px",
+                  objectFit: "cover",
+                  borderRadius: "8px"
+                }}
+              />
 
-
-{/* PRICE */}
-
-<div style={{width:"120px"}}>
-
-{editingId === product.id ? (
-<input
-value={editPrice}
-onChange={(e)=>setEditPrice(e.target.value)}
-style={{padding:"6px",width:"80px"}}
-/>
-):(
-<p>₹ {product.price}</p>
-)}
-
-</div>
+              <p style={{ marginLeft: "20px", width: "130px" }}>
+                {product.category}
+              </p>
 
 
-{/* ACTION */}
+              {/* NAME */}
 
-<div style={{display:"flex",gap:"10px"}}>
+              <div style={{ width: "220px" }}>
 
-{editingId === product.id ? (
+                {editingId === product._id ? (
+                  <input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    style={{ padding: "6px" }}
+                  />
+                ) : (
+                  <p>{product.name}</p>
+                )}
 
-<button
-onClick={saveEdit}
-style={btnPink}
->
-Save
-</button>
+              </div>
 
-):(
 
-<button
-onClick={()=>startEdit(product)}
-style={btnPink}
->
-Edit
-</button>
+              {/* PRICE */}
 
-)}
+              <div style={{ width: "120px" }}>
 
-<button
-onClick={()=>deleteProduct(product.id)}
-style={btnPink}
->
-Delete
-</button>
+                {editingId === product._id ? (
+                  <input
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    style={{ padding: "6px", width: "80px" }}
+                  />
+                ) : (
+                  <p>₹ {product.price}</p>
+                )}
 
-</div>
+              </div>
 
-</div>
 
-))}
+              {/* ACTION */}
 
-</div>
+              <div style={{ display: "flex", gap: "10px" }}>
 
-</div>
+                {editingId === product._id ? (
 
-</div>
+                  <button
+                    onClick={saveEdit}
+                    style={btnPink}
+                  >
+                    Save
+                  </button>
+
+                ) : (
+
+                  <button
+                    onClick={() => startEdit(product)}
+                    style={btnPink}
+                  >
+                    Edit
+                  </button>
+
+                )}
+
+                <button
+                  onClick={() => deleteProduct(product._id)}
+                  style={btnPink}
+                >
+                  Delete
+                </button>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </div>
+
+    </div>
   );
 }
 
 
 /* ================= COMPONENTS ================= */
 
-function SidebarItem({text,active,onClick}){
+function SidebarItem({ text, active, onClick }) {
 
-return(
-<p
-onClick={onClick}
-style={{
-padding:"10px",
-marginTop:"10px",
-background:active ? "#fff":"transparent",
-color:active ? "#ff2e8a":"#fff",
-borderRadius:"5px",
-cursor:"pointer"
-}}
->
-{text}
-</p>
-);
+  return (
+    <p
+      onClick={onClick}
+      style={{
+        padding: "10px",
+        marginTop: "10px",
+        background: active ? "#fff" : "transparent",
+        color: active ? "#ff2e8a" : "#fff",
+        borderRadius: "5px",
+        cursor: "pointer"
+      }}
+    >
+      {text}
+    </p>
+  );
 }
 
-const btnPink={
-background:"#ff2e8a",
-color:"#fff",
-border:"none",
-padding:"6px 14px",
-borderRadius:"5px",
-cursor:"pointer"
+const btnPink = {
+  background: "#ff2e8a",
+  color: "#fff",
+  border: "none",
+  padding: "6px 14px",
+  borderRadius: "5px",
+  cursor: "pointer"
 };

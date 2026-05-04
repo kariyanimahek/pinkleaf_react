@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import api from "../../lib/api";
 
 // IMPORT SAME LOCAL IMAGES
 import logo from "../../assets/pinkleaf_logo.jpeg";
@@ -19,36 +20,41 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
     navigate("/");
   };
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("categories")) || [
-      "T-shirt",
-      "Jeans",
-      "Western Wear",
-      "Cordset",
-      "Kurti"
-    ];
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories');
+        const stored = response.data.map(cat => cat.name);
 
-    const categoryImages = {
-      "t-shirt": tshirtImg,
-      "tshirt": tshirtImg,
-      "jeans": jeansImg,
-      "western wear": westernImg,
-      "western": westernImg,
-      "cordset": cordsetImg,
-      "cord-set": cordsetImg,
-      "kurti": kurtiImg
+        const categoryImages = {
+          "t-shirt": tshirtImg,
+          "tshirt": tshirtImg,
+          "jeans": jeansImg,
+          "western wear": westernImg,
+          "western": westernImg,
+          "cordset": cordsetImg,
+          "cord-set": cordsetImg,
+          "kurti": kurtiImg
+        };
+
+        const formatted = stored.map(cat => ({
+          name: cat,
+          value: cat.toLowerCase().replace(/\s/g, ""),
+          img: categoryImages[cat.toLowerCase()] || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=350&h=200&auto=format&fit=crop"
+        }));
+
+        setCategories(formatted);
+      } catch (error) {
+        console.error("Error fetching categories", error);
+      }
     };
 
-    const formatted = stored.map(cat => ({
-      name: cat,
-      value: cat.toLowerCase().replace(/\s/g, ""),
-      img: categoryImages[cat.toLowerCase()] || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=350&h=200&auto=format&fit=crop"
-    }));
-
-    setCategories(formatted);
+    fetchCategories();
   }, []);
 
   return (
